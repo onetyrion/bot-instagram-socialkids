@@ -1,0 +1,53 @@
+name: Ejecutar Bot de Instagram
+
+on:
+  schedule:
+    # Se ejecuta todos los días a las 12:00 UTC (8:00 AM hora de Chile)
+    # La estructura es: 'Minuto Hora Día-del-mes Mes Día-de-la-semana'
+    - cron: '0 12 * * *'
+  
+  workflow_dispatch: # Esto te permite seguir activándolo manualmente desde la web cuando quieras probar algo
+
+jobs:
+  publicar:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Descargar código del repositorio
+        uses: actions/checkout@v4
+
+      - name: Configurar Bun
+        uses: oven-sh/setup-bun@v1
+        with:
+          bun-version: 'latest'
+
+      - name: Detalles del Entorno
+        run: |
+          echo "==== Entorno de Ejecución ===="
+          echo "Bun version: $(bun -v)"
+          echo "Fecha actual: $(date)"
+          echo "=============================="
+
+      - name: Instalar dependencias
+        run: bun install
+
+      - name: Ejecutar Bot de Instagram
+        env:
+          INSTAGRAM_ID: ${{ secrets.INSTAGRAM_ID }}
+          INSTAGRAM_TOKEN: ${{ secrets.INSTAGRAM_TOKEN }}
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
+          JAMENDO_CLIENT_ID: ${{ secrets.JAMENDO_CLIENT_ID }}
+          ENABLE_INSTAGRAM_POSTING: 'true'
+        run: |
+          echo "⏳ Iniciando log detallado del bot..."
+          bun run start
+          echo "✅ Ejecución finalizada dentro de GitHub Actions."
+
+      - name: Reportar Fallo
+        if: failure()
+        run: |
+          echo "🚨 El script ha fallado. Revisando por qué no se pudo publicar en Instagram..."
+          echo "### ❌ Error en la Publicación" >> $GITHUB_STEP_SUMMARY
+          echo "El bot encontró un error crítico y se detuvo. Revisa los logs del paso 'Ejecutar Bot de Instagram' para más detalles." >> $GITHUB_STEP_SUMMARY
